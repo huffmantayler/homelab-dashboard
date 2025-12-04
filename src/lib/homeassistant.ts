@@ -27,7 +27,9 @@ export const getHassStates = async (): Promise<HassEntity[]> => {
         });
 
         if (!response.ok) {
-            throw new Error(`Home Assistant API error: ${response.status} ${response.statusText}`);
+            const text = await response.text();
+            console.error('HA API Error Body:', text);
+            throw new Error(`Home Assistant API error: ${response.status} ${response.statusText} - ${text}`);
         }
 
         const data = await response.json();
@@ -56,7 +58,9 @@ export const toggleLight = async (entityId: string, turnOn: boolean): Promise<bo
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to toggle light: ${response.statusText}`);
+            const text = await response.text();
+            console.error('HA Toggle Error Body:', text);
+            throw new Error(`Failed to toggle light: ${response.statusText} - ${text}`);
         }
 
         return true;
