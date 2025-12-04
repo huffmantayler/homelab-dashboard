@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Grid, Box, IconButton } from '@mui/material';
+import { Grid, Box } from '@mui/material';
 import { DragIndicator } from '@mui/icons-material';
 
 interface SortableItemProps {
