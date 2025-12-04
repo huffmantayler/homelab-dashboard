@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Drawer,
     List,
@@ -25,12 +26,15 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, handleDrawerToggle }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
     const menuItems = [
-        { text: 'Dashboard', icon: <DashboardIcon /> },
-        { text: 'Storage', icon: <StorageIcon /> },
-        { text: 'Network', icon: <NetworkIcon /> },
-        { text: 'Security', icon: <SecurityIcon /> },
-        { text: 'Settings', icon: <SettingsIcon /> },
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+        { text: 'Storage', icon: <StorageIcon />, path: '/storage' },
+        { text: 'Network', icon: <NetworkIcon />, path: '/network' },
+        { text: 'Security', icon: <SecurityIcon />, path: '/security' },
+        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
     ];
 
     const drawerContent = (
@@ -59,8 +63,14 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, handleDrawerToggle }) => 
             <List>
                 {menuItems.map((item) => (
                     <ListItem key={item.text} disablePadding>
-                        <ListItemButton>
-                            <ListItemIcon sx={{ color: 'primary.main' }}>
+                        <ListItemButton
+                            selected={location.pathname === item.path}
+                            onClick={() => {
+                                navigate(item.path);
+                                if (mobileOpen) handleDrawerToggle();
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'inherit' }}>
                                 {item.icon}
                             </ListItemIcon>
                             <ListItemText primary={item.text} />

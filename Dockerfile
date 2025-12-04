@@ -12,20 +12,29 @@ COPY . .
 ARG VITE_BESZEL_URL
 ARG VITE_BESZEL_EMAIL
 ARG VITE_BESZEL_PASSWORD
+# VITE_PIHOLE_URL is needed at runtime for Nginx, but also build time if used in code
+ARG VITE_PIHOLE_URL
+ARG VITE_PIHOLE_API_KEY
 
 # Set environment variables during build
 ENV VITE_BESZEL_URL=$VITE_BESZEL_URL
 ENV VITE_BESZEL_EMAIL=$VITE_BESZEL_EMAIL
 ENV VITE_BESZEL_PASSWORD=$VITE_BESZEL_PASSWORD
+ENV VITE_PIHOLE_URL=$VITE_PIHOLE_URL
+ENV VITE_PIHOLE_API_KEY=$VITE_PIHOLE_API_KEY
 
 RUN npm run build
 
 # Stage 2: Production
 FROM nginx:alpine
 
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Substitute environment variables in nginx config and start nginx
+CMD ["/bin/sh", "-c", "envsubst '${VITE_PIHOLE_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

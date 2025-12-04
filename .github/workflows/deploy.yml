@@ -47,6 +47,8 @@ jobs:
             VITE_BESZEL_URL=${{ secrets.VITE_BESZEL_URL }}
             VITE_BESZEL_EMAIL=${{ secrets.VITE_BESZEL_EMAIL }}
             VITE_BESZEL_PASSWORD=${{ secrets.VITE_BESZEL_PASSWORD }}
+            VITE_PIHOLE_URL=${{ secrets.VITE_PIHOLE_URL }}
+            VITE_PIHOLE_API_KEY=${{ secrets.VITE_PIHOLE_API_KEY }}
 
   deploy:
     needs: build-and-push
@@ -69,6 +71,7 @@ jobs:
             --name home-dashboard \
             --restart unless-stopped \
             -p 8080:80 \
+            -e VITE_PIHOLE_URL=${{ secrets.VITE_PIHOLE_URL }} \
             ghcr.io/${{ github.repository }}:latest
 
       - name: Cleanup unused images
