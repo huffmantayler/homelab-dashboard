@@ -13,7 +13,7 @@ export interface HassEntity {
 
 export const getHassStates = async (): Promise<HassEntity[]> => {
     try {
-        const token = import.meta.env.VITE_HA_TOKEN;
+        const token = import.meta.env.VITE_HA_TOKEN?.trim();
         if (!token) {
             console.error('VITE_HA_TOKEN is missing');
             return [];
@@ -22,7 +22,6 @@ export const getHassStates = async (): Promise<HassEntity[]> => {
         const response = await fetch('/api/hass/states', {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
             },
         });
 
@@ -42,7 +41,7 @@ export const getHassStates = async (): Promise<HassEntity[]> => {
 
 export const toggleLight = async (entityId: string, turnOn: boolean): Promise<boolean> => {
     try {
-        const token = import.meta.env.VITE_HA_TOKEN;
+        const token = import.meta.env.VITE_HA_TOKEN?.trim();
         if (!token) return false;
 
         const service = turnOn ? 'turn_on' : 'turn_off';
