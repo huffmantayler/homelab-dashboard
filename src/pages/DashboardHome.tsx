@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Grid, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import ServerCard from '../components/ServerCard';
+import LightControl from '../components/LightControl';
 import { getSystems, type SystemStats } from '../lib/beszel';
 
 const DashboardHome: React.FC = () => {
@@ -61,6 +62,10 @@ const DashboardHome: React.FC = () => {
                             <ServerCard system={system} />
                         </Grid>
                     ))}
+                    {/* Home Assistant Light Control */}
+                    <Grid size={{ xs: 12, sm: 12, md: 8, lg: 6 }}>
+                        <LightControl />
+                    </Grid>
                 </Grid>
             )}
         </Box>

@@ -31,7 +31,7 @@ const HistoryChart: React.FC<HistoryChartProps> = ({ data, title, dataKey, color
                 <Typography variant="h6" gutterBottom>
                     {title}
                 </Typography>
-                <Box sx={{ flexGrow: 1, minHeight: 250 }}>
+                <Box sx={{ flexGrow: 1, height: 300, minHeight: 250 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
                             data={data}

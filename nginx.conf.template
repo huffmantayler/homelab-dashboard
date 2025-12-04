@@ -27,6 +27,22 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
+    # Proxy for Home Assistant API
+    location /api/hass {
+        # Rewrite the path to match Home Assistant API structure
+        rewrite ^/api/hass(.*)$ /api$1 break;
+        
+        # Proxy to the Home Assistant server defined in env var
+        proxy_pass ${VITE_HA_URL};
+        
+        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
         expires 1y;
