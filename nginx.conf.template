@@ -28,19 +28,26 @@ server {
     }
 
     # Proxy for Home Assistant API
-    location /api/hass {
-        # Rewrite the path to match Home Assistant API structure
-        rewrite ^/api/hass(.*)$ /api$1 break;
-        
+    location /api/hass/ {
         # Proxy to the Home Assistant server defined in env var
-        proxy_pass ${VITE_HA_URL};
+        # Trailing slash is important here for automatic path mapping
+        proxy_pass ${VITE_HA_URL}/api/;
         
-        # Standard proxy headers
-        # Standard proxy headers
         proxy_http_version 1.1;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+        # Pass the client's Host header
+        proxy_set_header Host $host;
+        
+        # Strip headers that might confuse HA or cause 400 errors
         proxy_set_header Cookie "";
+        proxy_set_header Origin "";
+        proxy_set_header Referer "";
+        proxy_set_header Upgrade "";
+        proxy_set_header Connection "";
+        
+        # Strip Forwarded headers to avoid Trusted Proxy issues
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header X-Real-IP "";
     }
 
     # Cache static assets
