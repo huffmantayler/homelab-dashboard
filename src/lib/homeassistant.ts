@@ -13,11 +13,15 @@ export interface HassEntity {
 
 export const getHassStates = async (): Promise<HassEntity[]> => {
     try {
-        const token = import.meta.env.VITE_HA_TOKEN?.trim();
+        let token = import.meta.env.VITE_HA_TOKEN?.trim();
         if (!token) {
             console.error('VITE_HA_TOKEN is missing');
             return [];
         }
+        // Remove quotes if present (common mistake in secrets)
+        token = token.replace(/^["']|["']$/g, '');
+        // Remove Bearer prefix if present
+        token = token.replace(/^Bearer\s+/i, '');
 
         const response = await fetch('/api/hass/states', {
             headers: {
@@ -41,8 +45,9 @@ export const getHassStates = async (): Promise<HassEntity[]> => {
 
 export const toggleLight = async (entityId: string, turnOn: boolean): Promise<boolean> => {
     try {
-        const token = import.meta.env.VITE_HA_TOKEN?.trim();
+        let token = import.meta.env.VITE_HA_TOKEN?.trim();
         if (!token) return false;
+        token = token.replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '');
 
         const service = turnOn ? 'turn_on' : 'turn_off';
         const response = await fetch(`/api/hass/services/homeassistant/${service}`, {
