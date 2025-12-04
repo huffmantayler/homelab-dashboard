@@ -14,8 +14,6 @@ export interface SystemStats {
     cpu: number;
     memory: number;
     disk: number;
-    network_rx: number;
-    network_tx: number;
     updated: string;
 }
 
@@ -46,8 +44,6 @@ export const getSystems = async (): Promise<SystemStats[]> => {
             cpu: record.info?.cpu || 0,
             memory: record.info?.mp || 0,
             disk: record.info?.dp || 0,
-            network_rx: 0,
-            network_tx: 0,
             updated: record.updated,
         }));
     } catch (error) {
