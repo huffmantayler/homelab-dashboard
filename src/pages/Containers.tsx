@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, CircularProgress, Alert, Grid, Card, CardContent, Chip } from '@mui/material';
 import { useData } from '../contexts/DataContext';
 import type { ContainerStats } from '../lib/beszel';

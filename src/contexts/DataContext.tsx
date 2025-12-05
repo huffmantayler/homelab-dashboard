@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { getSystems, getContainers, type SystemStats, type ContainerStats } from '../lib/beszel';
 
 export interface Alert {
