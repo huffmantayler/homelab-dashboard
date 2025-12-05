@@ -8,6 +8,11 @@ import {
     Box,
     Avatar,
     Badge,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -17,6 +22,7 @@ import {
 import { Menu, MenuItem } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from 'react-oidc-context';
 
 const drawerWidth = 240;
 
@@ -66,8 +72,21 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ handleDrawerToggle }) => {
     const { alerts } = useData();
+    const auth = useAuth();
+
+    // Debugging: Log user profile to see available claims
+    React.useEffect(() => {
+        if (auth.user) {
+            console.log("User Profile:", auth.user.profile);
+        }
+    }, [auth.user]);
+
+    // Notifications Menu State
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+
+    // User Modal State
+    const [userModalOpen, setUserModalOpen] = React.useState(false);
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -76,6 +95,47 @@ const Header: React.FC<HeaderProps> = ({ handleDrawerToggle }) => {
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
+
+    const handleUserClick = () => {
+        setUserModalOpen(true);
+    };
+
+    const handleUserModalClose = () => {
+        setUserModalOpen(false);
+    };
+
+    const handleLogout = () => {
+        handleUserModalClose();
+        auth.signoutRedirect();
+    };
+
+    // Improved Initials Logic
+    const getInitials = () => {
+        const profile = auth.user?.profile;
+        if (!profile) return 'U';
+
+        if (profile.given_name && profile.family_name) {
+            return `${profile.given_name.charAt(0)}${profile.family_name.charAt(0)}`.toUpperCase();
+        }
+
+        if (profile.name) {
+            const parts = profile.name.split(' ');
+            if (parts.length >= 2) {
+                return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+            }
+            return profile.name.charAt(0).toUpperCase();
+        }
+
+        if (profile.preferred_username) {
+            return profile.preferred_username.charAt(0).toUpperCase();
+        }
+
+        return 'U';
+    };
+
+    const userInitials = getInitials();
+    const userName = auth.user?.profile.name || auth.user?.profile.preferred_username || 'User';
+    const userEmail = auth.user?.profile.email || '';
 
     return (
         <AppBar
@@ -153,9 +213,34 @@ const Header: React.FC<HeaderProps> = ({ handleDrawerToggle }) => {
                             ))
                         )}
                     </Menu>
-                    <Avatar alt="User" src="/static/images/avatar/1.jpg" sx={{ bgcolor: 'secondary.main' }}>
-                        U
-                    </Avatar>
+
+                    {/* User Profile Section */}
+                    <IconButton
+                        onClick={handleUserClick}
+                        sx={{ p: 0 }}
+                    >
+                        <Avatar alt={userName} sx={{ bgcolor: 'secondary.main' }}>
+                            {userInitials}
+                        </Avatar>
+                    </IconButton>
+
+                    {/* User Profile Modal */}
+                    <Dialog open={userModalOpen} onClose={handleUserModalClose} maxWidth="xs" fullWidth>
+                        <DialogTitle>User Profile</DialogTitle>
+                        <DialogContent dividers>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 2 }}>
+                                <Avatar alt={userName} sx={{ width: 80, height: 80, bgcolor: 'secondary.main', fontSize: '2rem' }}>
+                                    {userInitials}
+                                </Avatar>
+                                <Typography variant="h5">{userName}</Typography>
+                                <Typography variant="body1" color="text.secondary">{userEmail}</Typography>
+                            </Box>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleUserModalClose}>Close</Button>
+                            <Button onClick={handleLogout} color="error" variant="contained">Logout</Button>
+                        </DialogActions>
+                    </Dialog>
                 </Box>
             </Toolbar>
         </AppBar>
