@@ -24,10 +24,12 @@ export interface PiholeStats {
 
 export const getPiholeStats = async (): Promise<PiholeStats | null> => {
     try {
-        const apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
+        let apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
         const headers: HeadersInit = {};
 
         if (apiKey) {
+            // Sanitize: trim whitespace and remove surrounding quotes
+            apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
             headers['sid'] = apiKey;
         }
 
@@ -51,10 +53,12 @@ export const getPiholeStats = async (): Promise<PiholeStats | null> => {
 
 export const getPiholeHistory = async (): Promise<any | null> => {
     try {
-        const apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
+        let apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
         const headers: HeadersInit = {};
 
         if (apiKey) {
+            // Sanitize: trim whitespace and remove surrounding quotes
+            apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
             headers['sid'] = apiKey;
         }
 

@@ -5,7 +5,10 @@ import {
     Memory as MemoryIcon,
     Speed as SpeedIcon,
     Dns as DnsIcon,
+    Apps as AppsIcon,
 } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
+import { IconButton } from '@mui/material';
 import type { SystemStats } from '../lib/beszel';
 
 interface ServerCardProps {
@@ -53,13 +56,23 @@ const ServerCard: React.FC<ServerCardProps> = ({ system }) => {
                             {system.name}
                         </Typography>
                     </Box>
-                    <Chip
-                        label={isOnline ? 'ONLINE' : 'OFFLINE'}
-                        color={isOnline ? 'success' : 'error'}
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontWeight: 'bold' }}
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <IconButton
+                            size="small"
+                            component={Link}
+                            to={`/containers#${system.id}`}
+                            title="View Containers"
+                        >
+                            <AppsIcon fontSize="small" />
+                        </IconButton>
+                        <Chip
+                            label={isOnline ? 'ONLINE' : 'OFFLINE'}
+                            color={isOnline ? 'success' : 'error'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 'bold' }}
+                        />
+                    </Box>
                 </Box>
 
                 <MetricRow

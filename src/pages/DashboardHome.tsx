@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Grid, Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
 import { Edit as EditIcon, Save as SaveIcon } from '@mui/icons-material';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -7,14 +7,12 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import ServerCard from '../components/ServerCard';
 import LightControl from '../components/LightControl';
 import { SortableItem } from '../components/SortableItem';
-import { getSystems, type SystemStats } from '../lib/beszel';
+import { useData } from '../contexts/DataContext';
 
 const LIGHT_CONTROL_ID = 'widget-light-control';
 
 const DashboardHome: React.FC = () => {
-    const [systems, setSystems] = useState<SystemStats[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { systems, loading } = useData();
     const [isEditMode, setIsEditMode] = useState(false);
     const [layoutOrder, setLayoutOrder] = useState<string[]>([]);
 
@@ -37,22 +35,16 @@ const DashboardHome: React.FC = () => {
         }
     }, []);
 
-    const fetchData = useCallback(async () => {
-        try {
-            const data = await getSystems();
-            setSystems(data);
-            setError(null);
-
-            // Sync layout with new data
+    // Sync layout with new data
+    useEffect(() => {
+        if (!loading && systems.length > 0) {
             setLayoutOrder(prevOrder => {
                 const currentIds = new Set(prevOrder);
-                const systemIds = data.map(s => s.id);
+                const systemIds = systems.map(s => s.id);
 
                 // Add LightControl if missing
                 if (!currentIds.has(LIGHT_CONTROL_ID)) {
                     currentIds.add(LIGHT_CONTROL_ID);
-                    // Default: LightControl at the end or beginning? Let's append if new.
-                    // But for initial load, we might want a default order.
                 }
 
                 // Add new systems
@@ -66,19 +58,8 @@ const DashboardHome: React.FC = () => {
                 // Otherwise append new items
                 return [...prevOrder, ...newIds];
             });
-
-        } catch (err) {
-            setError('Failed to load system data. Please check your Beszel connection.');
-        } finally {
-            setLoading(false);
         }
-    }, []);
-
-    useEffect(() => {
-        fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
-    }, [fetchData]);
+    }, [loading, systems]);
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -109,8 +90,6 @@ const DashboardHome: React.FC = () => {
     }
 
     // Filter out IDs that no longer exist (e.g. removed servers) for rendering
-    // But keep them in state just in case they come back? Or filter them out?
-    // Let's filter for rendering only.
     const validSystemIds = new Set(systems.map(s => s.id));
     const renderableItems = layoutOrder.filter(id => id === LIGHT_CONTROL_ID || validSystemIds.has(id));
 
@@ -134,12 +113,6 @@ const DashboardHome: React.FC = () => {
                     {isEditMode ? "Done Editing" : "Edit Layout"}
                 </Button>
             </Box>
-
-            {error && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                    {error} - Make sure VITE_BESZEL_URL is set in .env
-                </Alert>
-            )}
 
             <DndContext
                 sensors={sensors}

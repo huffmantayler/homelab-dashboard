@@ -14,7 +14,9 @@ import {
     Search as SearchIcon,
     Notifications as NotificationsIcon,
 } from '@mui/icons-material';
+import { Menu, MenuItem } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
+import { useData } from '../contexts/DataContext';
 
 const drawerWidth = 240;
 
@@ -63,6 +65,18 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ handleDrawerToggle }) => {
+    const { alerts } = useData();
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
     return (
         <AppBar
             position="fixed"
@@ -96,11 +110,49 @@ const Header: React.FC<HeaderProps> = ({ handleDrawerToggle }) => {
                 </Search>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <IconButton color="inherit">
-                        <Badge badgeContent={4} color="error">
+                    <IconButton
+                        color="inherit"
+                        onClick={handleMenuClick}
+                        aria-controls={open ? 'alert-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? 'true' : undefined}
+                    >
+                        <Badge badgeContent={alerts.length} color="error">
                             <NotificationsIcon />
                         </Badge>
                     </IconButton>
+                    <Menu
+                        id="alert-menu"
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleMenuClose}
+                        MenuListProps={{
+                            'aria-labelledby': 'alert-button',
+                        }}
+                        PaperProps={{
+                            style: {
+                                maxHeight: 400,
+                                width: '350px',
+                            },
+                        }}
+                    >
+                        {alerts.length === 0 ? (
+                            <MenuItem onClick={handleMenuClose}>No new alerts</MenuItem>
+                        ) : (
+                            alerts.map((alert) => (
+                                <MenuItem key={alert.id} onClick={handleMenuClose} sx={{ whiteSpace: 'normal' }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                        <Typography variant="subtitle2" color={alert.type === 'error' ? 'error' : 'warning.main'}>
+                                            {alert.message}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {alert.timestamp.toLocaleTimeString()}
+                                        </Typography>
+                                    </Box>
+                                </MenuItem>
+                            ))
+                        )}
+                    </Menu>
                     <Avatar alt="User" src="/static/images/avatar/1.jpg" sx={{ bgcolor: 'secondary.main' }}>
                         U
                     </Avatar>
