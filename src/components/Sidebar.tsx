@@ -17,6 +17,7 @@ import {
     NetworkCheck as NetworkIcon,
     Security as SecurityIcon,
     Apps as AppsIcon,
+    MonitorHeart as ActivityIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -32,6 +33,8 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, handleDrawerToggle }) => 
 
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+        { text: 'Status', icon: <ActivityIcon />, path: '/status' },
+
         { text: 'Containers', icon: <AppsIcon />, path: '/containers' },
         { text: 'Storage', icon: <StorageIcon />, path: '/storage' },
         { text: 'Network', icon: <NetworkIcon />, path: '/network' },
