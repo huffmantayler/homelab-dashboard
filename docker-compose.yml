@@ -6,7 +6,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
       - VITE_HA_URL=${VITE_HA_URL}
@@ -18,8 +19,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    image: ${IMAGE_REPO:-ghcr.io/huffmantayler/homelab-dashboard}-backend:latest
+    container_name: home-dashboard-backend
+    restart: unless-stopped
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     environment:
       - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
       - VITE_PIHOLE_PASSWORD=${VITE_PIHOLE_PASSWORD}
