@@ -40,6 +40,12 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        '/uptime-kuma/socket.io': {
+          target: env.VITE_UPTIME_KUMA_URL,
+          ws: true,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/uptime-kuma\/socket.io/, '/socket.io'),
+        },
       },
     },
   };
