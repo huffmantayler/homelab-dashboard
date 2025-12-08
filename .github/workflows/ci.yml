@@ -3,9 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [ "main" ]
-  # Optional: Also run on push to main to ensure the branch stays green
-  push:
-    branches: [ "main" ]
+
 
 jobs:
   test:

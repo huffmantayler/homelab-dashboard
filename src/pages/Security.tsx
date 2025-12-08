@@ -65,7 +65,7 @@ const Security: React.FC = () => {
             if (historyData && historyData.history) {
                 // Map the history array from the API response
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setHistory(historyData.history.map((item: any) => ({
+                setHistory((historyData.history as any[]).map((item: any) => ({
                     time: item.timestamp,
                     queries: item.total,
                     blocked: item.blocked,
