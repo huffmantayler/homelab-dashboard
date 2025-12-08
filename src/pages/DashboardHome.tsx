@@ -23,22 +23,11 @@ const DashboardHome: React.FC = () => {
         })
     );
 
-    // Load saved layout on mount
-    useEffect(() => {
-        const savedLayout = localStorage.getItem('dashboardLayout');
-        if (savedLayout) {
-            try {
-                setLayoutOrder(JSON.parse(savedLayout));
-            } catch (e) {
-                console.error('Failed to parse saved layout', e);
-            }
-        }
-    }, []);
-
-    // Sync layout with new data
+    // Update layout when systems change (add new systems)
     useEffect(() => {
         if (!loading && systems.length > 0) {
-            setLayoutOrder(prevOrder => {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLayoutOrder((prevOrder) => {
                 const currentIds = new Set(prevOrder);
                 const systemIds = systems.map(s => s.id);
 
@@ -49,6 +38,10 @@ const DashboardHome: React.FC = () => {
 
                 // Add new systems
                 const newIds = systemIds.filter(id => !currentIds.has(id));
+
+                if (newIds.length === 0 && currentIds.has(LIGHT_CONTROL_ID)) {
+                    return prevOrder;
+                }
 
                 // If layout is empty (first run), create default layout
                 if (prevOrder.length === 0) {

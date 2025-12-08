@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     Card,
     CardContent,
@@ -17,8 +17,9 @@ const LightControl: React.FC = () => {
     const [lights, setLights] = useState<HassEntity[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const hasLoadedLights = useRef(false);
 
-    const fetchLights = async () => {
+    const fetchLights = useCallback(async () => {
         const states = await getHassStates();
         if (states.length > 0) {
             // Filter for entities that start with 'light.'
@@ -28,21 +29,23 @@ const LightControl: React.FC = () => {
             );
             setLights(lightEntities);
             setError(null);
+            hasLoadedLights.current = true;
         } else {
             // Only set error if we haven't loaded any lights yet
-            if (lights.length === 0) {
+            if (!hasLoadedLights.current) {
                 setError('Failed to load lights. Check VITE_HA_URL and VITE_HA_TOKEN.');
             }
         }
         setLoading(false);
-    };
+    }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchLights();
         // Poll every 5 seconds to keep states in sync
         const interval = setInterval(fetchLights, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchLights]);
 
     const handleToggle = async (entityId: string, currentState: string) => {
         const newState = currentState === 'on' ? false : true;

@@ -37,6 +37,27 @@ export interface Uptime {
     percent: number;
 }
 
+// Define specific types for socket events to avoid 'any'
+interface LoginResponse {
+    ok: boolean;
+    msg?: string;
+}
+
+interface SocketError {
+    message: string;
+    data?: unknown;
+    req?: unknown;
+}
+
+interface RawHeartbeat {
+    monitorID?: number;
+    monitor_id?: number;
+    status: number;
+    time: string;
+    msg: string;
+    ping: number;
+}
+
 class UptimeKumaClient {
     private socket: Socket | null = null;
     private url: string;
@@ -125,7 +146,7 @@ class UptimeKumaClient {
                 console.log('Authenticating with Session Token...');
                 this.socket?.emit('loginByToken', {
                     token,
-                }, (res: any) => {
+                }, (res: LoginResponse) => {
                     if (res.ok) {
                         console.log('Logged in to Uptime Kuma with Token successfully');
                     } else {
@@ -137,7 +158,7 @@ class UptimeKumaClient {
                 this.socket?.emit('login', {
                     username,
                     password,
-                }, (res: any) => {
+                }, (res: LoginResponse) => {
                     if (res.ok) {
                         console.log('Logged in to Uptime Kuma successfully');
                     } else {
@@ -177,9 +198,9 @@ class UptimeKumaClient {
             this.listeners.forEach(l => l.onMonitorList?.(this.monitors));
         });
 
-        this.socket.on('heartbeat', (heartbeat: any) => {
+        this.socket.on('heartbeat', (heartbeat: RawHeartbeat) => {
             const hb: Heartbeat = {
-                monitorID: heartbeat.monitorID || heartbeat.monitor_id,
+                monitorID: heartbeat.monitorID || heartbeat.monitor_id || 0,
                 status: heartbeat.status,
                 time: heartbeat.time,
                 msg: heartbeat.msg,
@@ -192,16 +213,16 @@ class UptimeKumaClient {
             this.listeners.forEach(l => l.onHeartbeat?.(hb));
         });
 
-        this.socket.on('heartbeatList', (monitorID: any, data: any) => {
-            let newHeartbeats: any[] = [];
+        this.socket.on('heartbeatList', (monitorID: unknown, data: unknown) => {
+            const newHeartbeats: RawHeartbeat[] = [];
 
             if (Array.isArray(data)) {
                 // Format: (id, [heartbeats])
                 const last = data[data.length - 1];
                 if (last) newHeartbeats.push(last);
-            } else if (typeof monitorID === 'object') {
+            } else if (typeof monitorID === 'object' && monitorID !== null) {
                 // Format: { id: [heartbeats], id2: [heartbeats] }
-                Object.values(monitorID).forEach((list: any) => {
+                Object.values(monitorID).forEach((list) => {
                     if (Array.isArray(list) && list.length > 0) {
                         const last = list[list.length - 1];
                         if (last) newHeartbeats.push(last);
@@ -212,7 +233,7 @@ class UptimeKumaClient {
             // Update cache and notify
             newHeartbeats.forEach(rawHb => {
                 const hb: Heartbeat = {
-                    monitorID: rawHb.monitorID || rawHb.monitor_id,
+                    monitorID: rawHb.monitorID || rawHb.monitor_id || 0,
                     status: rawHb.status,
                     time: rawHb.time,
                     msg: rawHb.msg,
@@ -223,7 +244,7 @@ class UptimeKumaClient {
             });
         });
 
-        this.socket.on('uptime', (monitorID: any, period: any, percent: any) => {
+        this.socket.on('uptime', (monitorID: number | string, period: number | string, percent: number | string) => {
             const uptime = {
                 monitorID: Number(monitorID),
                 period: Number(period),
@@ -245,12 +266,12 @@ class UptimeKumaClient {
             this.listeners.forEach(l => l.onDisconnect?.());
         });
 
-        this.socket.on('connect_error', (err) => {
+        this.socket.on('connect_error', (err: SocketError | Error) => {
             console.error('Uptime Kuma Connection Error:', err.message);
-            // @ts-ignore
+            // @ts-expect-error - Checking for data property on error
             if (err.data) { console.error('Error Data:', err.data); }
-            // @ts-ignore
-            if (err.req) { console.error('Request:', err.req); } // Might be too verbose or undefined
+            // @ts-expect-error - Checking for req property on error
+            if (err.req) { console.error('Request:', err.req); }
         });
 
         this.socket.on('error', (err) => {

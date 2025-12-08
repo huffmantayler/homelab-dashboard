@@ -51,7 +51,7 @@ export const getPiholeStats = async (): Promise<PiholeStats | null> => {
     }
 };
 
-export const getPiholeHistory = async (): Promise<any | null> => {
+export const getPiholeHistory = async (): Promise<Record<string, unknown> | null> => {
     try {
         let apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
         const headers: HeadersInit = {};

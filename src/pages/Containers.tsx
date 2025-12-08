@@ -1,21 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Alert, Grid, Card, CardContent, Chip } from '@mui/material';
 import { useData } from '../contexts/DataContext';
 import type { ContainerStats } from '../lib/beszel';
 
 const Containers: React.FC = () => {
     const { containers, systems, loading } = useData();
+    const location = useLocation();
+    const scrolledRef = useRef(false);
+
+    // Reset scroll guard when hash changes
+    useEffect(() => {
+        scrolledRef.current = false;
+    }, [location.hash]);
 
     // Handle hash scrolling after data load
     useEffect(() => {
-        if (!loading && containers.length > 0 && window.location.hash) {
-            const id = window.location.hash.substring(1);
+        if (!loading && containers.length > 0 && location.hash && !scrolledRef.current) {
+            const id = location.hash.substring(1);
             const element = document.getElementById(id);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
+                scrolledRef.current = true;
             }
         }
-    }, [loading, containers, window.location.hash]);
+    }, [loading, containers, location.hash]);
 
     if (loading) {
         return (
