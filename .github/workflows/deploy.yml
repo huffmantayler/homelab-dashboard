@@ -144,7 +144,6 @@ jobs:
             -p 8080:80 \
             -e VITE_HA_URL=${{ secrets.VITE_HA_URL }} \
             -e VITE_UPTIME_KUMA_URL=${{ secrets.VITE_UPTIME_KUMA_URL }} \
-            # Pass Pi-hole URL just in case, but backend alias 'backend' is hardcoded in nginx.conf
             ghcr.io/${{ github.repository }}-frontend:latest
 
       - name: Cleanup unused images
