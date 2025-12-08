@@ -17,10 +17,13 @@ server {
     location /api/pihole {
         # Use Docker's internal DNS resolver and a variable to handle startup race conditions (Lazy Resolution)
         resolver 127.0.0.11 valid=30s;
-        set $backend_upstream http://backend:3000;
+        set $backend_upstream http://home-dashboard-backend:3000;
         
         # Proxy to the backend service
         proxy_pass $backend_upstream;
+        
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
         
         # Standard proxy headers
         proxy_set_header Host $host;
