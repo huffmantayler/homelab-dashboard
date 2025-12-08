@@ -15,13 +15,9 @@ server {
 
     # Proxy for Pi-hole API
     location /api/pihole {
-        # Use Docker's internal DNS resolver to handle startup race conditions
-        resolver 127.0.0.11 valid=30s;
-        set $backend_upstream http://backend:3000;
-        
-        # Proxy to the backend service (using variable forces lazy resolution)
-        # When using variables in proxy_pass, omitting the URI part preserves the original request URI
-        proxy_pass $backend_upstream;
+        # Proxy to the backend service
+        # Since docker-compose handles startup order via healthchecks, we can use standard resolution
+        proxy_pass http://backend:3000/api/pihole;
         
         # Standard proxy headers
         proxy_set_header Host $host;
