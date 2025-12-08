@@ -31,8 +31,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 getContainers()
             ]);
             setSystems(systemsData);
-            setContainers(containersData);
-            generateAlerts(systemsData, containersData);
+
+            // Filter out stale containers (not updated in last 5 minutes)
+            // This prevents "ghost" containers from previous deployments from showing up
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime();
+            const activeContainers = containersData.filter(c => {
+                const updatedTime = new Date(c.updated).getTime();
+                return updatedTime > fiveMinutesAgo;
+            });
+
+            setContainers(activeContainers);
+            generateAlerts(systemsData, activeContainers);
         } catch (error) {
             console.error('Failed to refresh data:', error);
         } finally {
