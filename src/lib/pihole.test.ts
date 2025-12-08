@@ -17,7 +17,7 @@ describe('Pi-hole Service', () => {
 
             const result = await getPiholeStats();
             expect(result).toEqual(mockData);
-            expect(fetch).toHaveBeenCalledWith('/api/pihole/stats/summary', expect.any(Object));
+            expect(fetch).toHaveBeenCalledWith('/api/pihole/stats/summary');
         });
 
         it('should return null on error', async () => {
