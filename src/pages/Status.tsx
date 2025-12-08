@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress, Alert, Card, CardContent, Chip, Tooltip, Grid } from '@mui/material';
-import { uptimeKuma, type Monitor, type Heartbeat } from '../lib/uptimeKuma';
+import { uptimeKuma, type Monitor, type Heartbeat, type Uptime } from '../lib/uptimeKuma';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import PendingIcon from '@mui/icons-material/Pending';
@@ -11,24 +11,34 @@ const Status: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [connected, setConnected] = useState(false);
     const [lastHeartbeats, setLastHeartbeats] = useState<{ [id: number]: Heartbeat }>({});
+    const [activeUptimes, setActiveUptimes] = useState<{ [id: number]: Uptime }>({});
 
     useEffect(() => {
-        uptimeKuma.connect(
+        const unsubscribe = uptimeKuma.subscribe(
             (monitorList) => {
                 setMonitors(monitorList);
                 setLoading(false);
-                setConnected(true);
             },
             (heartbeat) => {
                 setLastHeartbeats(prev => ({
                     ...prev,
                     [heartbeat.monitorID]: heartbeat
                 }));
-            }
+            },
+            (uptime) => {
+                if (uptime.period === 24) {
+                    setActiveUptimes(prev => ({
+                        ...prev,
+                        [uptime.monitorID]: uptime
+                    }));
+                }
+            },
+            () => setConnected(true),
+            () => setConnected(false)
         );
 
         return () => {
-            uptimeKuma.disconnect();
+            unsubscribe();
         };
     }, []);
 
@@ -48,7 +58,7 @@ const Status: React.FC = () => {
             case 0: return 'Down';
             case 2: return 'Pending';
             case 3: return 'Maintenance';
-            default: return 'Unknown';
+            default: return `Unknown (${status})`;
         }
     };
 
@@ -102,6 +112,7 @@ const Status: React.FC = () => {
                 <Grid container spacing={2}>
                     {sortedMonitors.map((monitor) => {
                         const heartbeat = lastHeartbeats[monitor.id];
+                        const uptime = activeUptimes[monitor.id];
                         const currentStatus = heartbeat?.status ?? monitor.status;
                         const ping = heartbeat?.ping ?? monitor.ping;
 
@@ -116,7 +127,7 @@ const Status: React.FC = () => {
                                     }
                                 }}>
                                     <CardContent>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                                             <Typography variant="h6" noWrap sx={{ maxWidth: '70%' }} title={monitor.name}>
                                                 {monitor.name}
                                             </Typography>
@@ -129,12 +140,46 @@ const Status: React.FC = () => {
                                             />
                                         </Box>
 
+                                        {/* Tags */}
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                                            <Chip
+                                                label={monitor.type}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ height: 20, fontSize: '0.7rem', opacity: 0.7 }}
+                                            />
+                                            {monitor.tags?.map(tag => (
+                                                <Chip
+                                                    key={tag.id}
+                                                    label={tag.name}
+                                                    size="small"
+                                                    sx={{
+                                                        height: 20,
+                                                        fontSize: '0.7rem',
+                                                        backgroundColor: tag.color,
+                                                        color: '#fff', // Assuming mostly dark tag colors, or we could calculate contrast
+                                                        textShadow: '0px 0px 2px rgba(0,0,0,0.5)'
+                                                    }}
+                                                />
+                                            ))}
+                                        </Box>
+
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Tooltip title={`Last Checked: ${heartbeat?.time || 'Unknown'}`}>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {ping ? `${ping}ms` : '--'}
-                                                </Typography>
-                                            </Tooltip>
+                                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                                <Tooltip title={`Response Time (Last Checked: ${heartbeat?.time || 'Unknown'})`}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        <span role="img" aria-label="ping">📶</span>
+                                                        {ping ? `${ping}ms` : '--'}
+                                                    </Typography>
+                                                </Tooltip>
+
+                                                <Tooltip title="24-Hour Uptime">
+                                                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        <span role="img" aria-label="uptime">⏱️</span>
+                                                        {uptime ? `${(uptime.percent * 100).toFixed(2)}%` : '--'}
+                                                    </Typography>
+                                                </Tooltip>
+                                            </Box>
 
                                             {monitor.url && (
                                                 <Typography
