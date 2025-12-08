@@ -27,6 +27,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
+
     # Proxy for Home Assistant API
     location /api/hass/ {
         # Proxy to the Home Assistant server defined in env var
@@ -48,6 +49,17 @@ server {
         # Strip Forwarded headers to avoid Trusted Proxy issues
         proxy_set_header X-Forwarded-For "";
         proxy_set_header X-Real-IP "";
+    }
+
+    # Proxy for Uptime Kuma Socket.IO
+    location /uptime-kuma/socket.io/ {
+        # Proxy to the Uptime Kuma server defined in env var
+        proxy_pass ${VITE_UPTIME_KUMA_URL}/socket.io/;
+        
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
     }
 
     # Cache static assets
