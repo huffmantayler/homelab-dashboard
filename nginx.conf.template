@@ -52,14 +52,20 @@ server {
     }
 
     # Proxy for Uptime Kuma Socket.IO
-    location /uptime-kuma/socket.io {
-        # Proxy to the Uptime Kuma server defined in env var
-        # Remove Host header to mimic changeOrigin: true
-        proxy_pass ${VITE_UPTIME_KUMA_URL}/socket.io;
+    location /uptime-kuma/socket.io/ {
+        # Rewrite URL to match upstream expectation: /uptime-kuma/socket.io/... -> /socket.io/...
+        rewrite ^/uptime-kuma/socket.io/(.*)$ /socket.io/$1 break;
+        
+        # Proxy to the Uptime Kuma server base URL (e.g., http://192.168.1.10:3001)
+        proxy_pass ${VITE_UPTIME_KUMA_URL};
         
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # Cache static assets
