@@ -1,0 +1,31 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
+      - VITE_HA_URL=${VITE_HA_URL}
+      - VITE_UPTIME_KUMA_URL=${VITE_UPTIME_KUMA_URL}
+    networks:
+      - home-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
+      - VITE_PIHOLE_PASSWORD=${VITE_PIHOLE_PASSWORD}
+    networks:
+      - home-net
+
+networks:
+  home-net:
+    driver: bridge

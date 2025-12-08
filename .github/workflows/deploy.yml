@@ -31,6 +31,8 @@ jobs:
       - name: Run Linting
         run: npm run lint
 
+
+
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
@@ -42,7 +44,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -50,28 +51,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
+      # Build Backend
+      - name: Extract metadata (backend)
+        id: meta-backend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
           tags: |
             type=raw,value=latest
             type=sha
 
-      - name: Build and push Docker image
+      - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.backend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      # Build Frontend
+      - name: Extract metadata (frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
           build-args: |
+            # Frontend build args
             VITE_BESZEL_URL=${{ secrets.VITE_BESZEL_URL }}
             VITE_BESZEL_EMAIL=${{ secrets.VITE_BESZEL_EMAIL }}
             VITE_BESZEL_PASSWORD=${{ secrets.VITE_BESZEL_PASSWORD }}
-            VITE_PIHOLE_URL=${{ secrets.VITE_PIHOLE_URL }}
-            VITE_PIHOLE_API_KEY=${{ secrets.VITE_PIHOLE_API_KEY }}
             VITE_HA_URL=${{ secrets.VITE_HA_URL }}
             VITE_HA_TOKEN=${{ secrets.VITE_HA_TOKEN }}
             VITE_UPTIME_KUMA_URL=${{ secrets.VITE_UPTIME_KUMA_URL }}
@@ -86,24 +107,45 @@ jobs:
       - name: Login to GHCR
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull Docker image
-        run: docker pull ghcr.io/${{ github.repository }}:latest
-
-      - name: Stop and remove existing container
+      - name: Pull Docker images
         run: |
+          docker pull ghcr.io/${{ github.repository }}-backend:latest
+          docker pull ghcr.io/${{ github.repository }}-frontend:latest
+
+      - name: Stop and remove existing containers
+        run: |
+          docker stop home-dashboard-frontend || true
+          docker rm home-dashboard-frontend || true
+          docker stop home-dashboard-backend || true
+          docker rm home-dashboard-backend || true
+          # Legacy cleanup
           docker stop home-dashboard || true
           docker rm home-dashboard || true
 
-      - name: Run new container
+      - name: Create network
+        run: docker network create home-net || true
+
+      - name: Run Backend
         run: |
           docker run -d \
-            --name home-dashboard \
+            --name home-dashboard-backend \
+            --network home-net \
+            --restart unless-stopped \
+            -e VITE_PIHOLE_URL=${{ secrets.VITE_PIHOLE_URL }} \
+            -e VITE_PIHOLE_PASSWORD=${{ secrets.VITE_PIHOLE_PASSWORD }} \
+            ghcr.io/${{ github.repository }}-backend:latest
+
+      - name: Run Frontend
+        run: |
+          docker run -d \
+            --name home-dashboard-frontend \
+            --network home-net \
             --restart unless-stopped \
             -p 8080:80 \
-            -e VITE_PIHOLE_URL=${{ secrets.VITE_PIHOLE_URL }} \
             -e VITE_HA_URL=${{ secrets.VITE_HA_URL }} \
             -e VITE_UPTIME_KUMA_URL=${{ secrets.VITE_UPTIME_KUMA_URL }} \
-            ghcr.io/${{ github.repository }}:latest
+            # Pass Pi-hole URL just in case, but backend alias 'backend' is hardcoded in nginx.conf
+            ghcr.io/${{ github.repository }}-frontend:latest
 
       - name: Cleanup unused images
         run: docker image prune -f

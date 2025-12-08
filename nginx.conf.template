@@ -15,11 +15,8 @@ server {
 
     # Proxy for Pi-hole API
     location /api/pihole {
-        # Rewrite the path to match Pi-hole v6 API structure
-        rewrite ^/api/pihole(.*)$ /api$1 break;
-        
-        # Proxy to the Pi-hole server defined in env var
-        proxy_pass ${VITE_PIHOLE_URL};
+        # Proxy to the backend service
+        proxy_pass http://backend:3000/api/pihole;
         
         # Standard proxy headers
         proxy_set_header Host $host;
