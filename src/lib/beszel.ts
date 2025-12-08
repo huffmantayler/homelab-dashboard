@@ -1,4 +1,4 @@
-import PocketBase from 'pocketbase';
+import PocketBase, { type RecordModel } from 'pocketbase';
 
 // Initialize the PocketBase client
 // You can override this with an environment variable VITE_BESZEL_URL
@@ -18,6 +18,18 @@ export interface SystemStats {
     updated: string;
 }
 
+interface SystemRecord extends RecordModel {
+    name: string;
+    status: string;
+    info?: {
+        cpu?: number;
+        mp?: number;
+        dp?: number;
+        dt?: number;
+    };
+    updated: string;
+}
+
 export const getSystems = async (): Promise<SystemStats[]> => {
     try {
         // Authenticate if credentials are provided
@@ -34,17 +46,19 @@ export const getSystems = async (): Promise<SystemStats[]> => {
         });
 
         // Map PocketBase records to our SystemStats interface
-        return records.map((record: any) => {
+        return records.map((record) => {
+            // Cast to SystemRecord to safely access fields
+            const rec = record as unknown as SystemRecord;
             return {
-                id: record.id,
-                name: record.name,
-                status: record.status || 'up',
+                id: rec.id,
+                name: rec.name,
+                status: (rec.status === 'up' || rec.status === 'down') ? rec.status : 'up',
                 // Metrics are nested in the 'info' object
-                cpu: record.info?.cpu || 0,
-                memory: record.info?.mp || 0,
-                disk: record.info?.dp || 0,
-                temperature: record.info?.dt || 0, // Assuming dt is temperature in Celsius
-                updated: record.updated,
+                cpu: rec.info?.cpu || 0,
+                memory: rec.info?.mp || 0,
+                disk: rec.info?.dp || 0,
+                temperature: rec.info?.dt || 0,
+                updated: rec.updated,
             };
         });
     } catch (error) {
@@ -65,6 +79,15 @@ export interface ContainerStats {
     updated: string;
 }
 
+interface ContainerRecord extends RecordModel {
+    name: string;
+    image: string;
+    status: string;
+    system: string;
+    cpu: number;
+    memory: number;
+}
+
 export const getContainers = async (): Promise<ContainerStats[]> => {
     try {
         // Authenticate if credentials are provided
@@ -79,22 +102,20 @@ export const getContainers = async (): Promise<ContainerStats[]> => {
             sort: 'name',
         });
 
-        // Remove debug log
-        // if (records.length > 0) {
-        //     console.log('Container Record:', records[0]);
-        // }
-
-        return records.map((record: any) => ({
-            id: record.id,
-            name: record.name,
-            image: record.image || 'Unknown Image',
-            status: record.status || 'unknown',
-            systemId: record.system || '', // Assuming 'system' is the relation field
-            cpu: record.cpu || 0, // Assuming direct field or nested in stats?
-            memory: record.memory || 0,
-            created: record.created,
-            updated: record.updated,
-        }));
+        return records.map((record) => {
+            const rec = record as unknown as ContainerRecord;
+            return {
+                id: rec.id,
+                name: rec.name,
+                image: rec.image || 'Unknown Image',
+                status: rec.status || 'unknown',
+                systemId: rec.system || '',
+                cpu: rec.cpu || 0,
+                memory: rec.memory || 0,
+                created: rec.created,
+                updated: rec.updated,
+            };
+        });
     } catch (error) {
         console.error('Failed to fetch containers:', error);
         return [];

@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_PIHOLE_URL || 'http://pi.hole',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/pihole/, '/api'),
-          configure: (proxy, _options) => {
-            proxy.on('error', (err, _req, _res) => {
+          configure: (proxy) => {
+            proxy.on('error', (err) => {
               console.log('proxy error', err);
             });
           },

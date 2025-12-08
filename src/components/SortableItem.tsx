@@ -4,11 +4,19 @@ import { CSS } from '@dnd-kit/utilities';
 import { Grid, Box } from '@mui/material';
 import { DragIndicator } from '@mui/icons-material';
 
+interface GridSizeProps {
+    xs?: number;
+    sm?: number;
+    md?: number;
+    lg?: number;
+    xl?: number;
+}
+
 interface SortableItemProps {
     id: string;
     children: React.ReactNode;
     isEditMode: boolean;
-    gridSize: any; // MUI Grid size props
+    gridSize: GridSizeProps;
 }
 
 export const SortableItem: React.FC<SortableItemProps> = ({ id, children, isEditMode, gridSize }) => {
@@ -21,14 +29,12 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children, isEdit
         isDragging
     } = useSortable({
         id,
-        disabled: !isEditMode
     });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        position: 'relative' as const,
-        zIndex: isDragging ? 1000 : 1,
+        height: '100%',
         opacity: isDragging ? 0.5 : 1,
     };
 

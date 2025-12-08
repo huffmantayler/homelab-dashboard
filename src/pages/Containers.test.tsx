@@ -13,7 +13,6 @@ describe('Containers Page', () => {
     it('renders loading state', () => {
         mockUseData.mockReturnValue({ loading: true, systems: [], containers: [] });
         render(
-            // @ts-ignore
             <MemoryRouter>
                 <Containers />
             </MemoryRouter>
@@ -36,7 +35,6 @@ describe('Containers Page', () => {
         });
 
         render(
-            // @ts-ignore
             <MemoryRouter>
                 <Containers />
             </MemoryRouter>
@@ -53,7 +51,6 @@ describe('Containers Page', () => {
             containers: []
         });
 
-        // @ts-ignore
         render(
             <MemoryRouter>
                 <Containers />

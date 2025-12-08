@@ -18,9 +18,9 @@ describe('Security Page', () => {
         };
 
         // Mock request to take 100ms
-        // @ts-ignore
+        // @ts-expect-error - Mocking fetch
         piholeService.getPiholeStats.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(mockStats), 100)));
-        // @ts-ignore
+        // @ts-expect-error - Mocking fetch
         piholeService.getPiholeHistory.mockResolvedValue({ history: [] });
 
         render(<Security />);
@@ -35,9 +35,9 @@ describe('Security Page', () => {
     });
 
     it('shows error message on failure', async () => {
-        // @ts-ignore
+        // @ts-expect-error - Mocking fetch
         piholeService.getPiholeStats.mockResolvedValue(null);
-        // @ts-ignore
+        // @ts-expect-error - Mocking fetch
         piholeService.getPiholeHistory.mockResolvedValue({ history: [] });
 
         render(<Security />);

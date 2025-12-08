@@ -1,23 +1,28 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, LinearProgress, Chip } from '@mui/material';
+import { Card, CardContent, Typography, Box, LinearProgress, Chip, IconButton } from '@mui/material';
+import { Link } from 'react-router-dom';
 import {
     Storage as StorageIcon,
     Memory as MemoryIcon,
     Speed as SpeedIcon,
     Dns as DnsIcon,
-    Apps as AppsIcon,
+    Apps as AppsIcon
 } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
-import { IconButton } from '@mui/material';
 import type { SystemStats } from '../lib/beszel';
 
-interface ServerCardProps {
-    system: SystemStats;
+interface MetricRowProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    progress?: number;
+    color?: string;
 }
 
-const MetricRow = ({ icon, label, value, progress, color }: any) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-        <Box sx={{ color: color, mr: 1.5, display: 'flex' }}>{icon}</Box>
+const MetricRow: React.FC<MetricRowProps> = ({ icon, label, value, progress, color = 'primary.main' }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ color: 'text.secondary', mr: 2, display: 'flex' }}>
+            {icon}
+        </Box>
         <Box sx={{ flexGrow: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -31,11 +36,13 @@ const MetricRow = ({ icon, label, value, progress, color }: any) => (
                 <LinearProgress
                     variant="determinate"
                     value={progress}
-                    color={color === 'error.main' ? 'error' : 'primary'}
                     sx={{
                         height: 6,
                         borderRadius: 3,
-                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        '& .MuiLinearProgress-bar': {
+                            backgroundColor: color
+                        }
                     }}
                 />
             )}
@@ -43,11 +50,15 @@ const MetricRow = ({ icon, label, value, progress, color }: any) => (
     </Box>
 );
 
+interface ServerCardProps {
+    system: SystemStats;
+}
+
 const ServerCard: React.FC<ServerCardProps> = ({ system }) => {
     const isOnline = system.status === 'up';
 
     return (
-        <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
+        <Card sx={{ height: '100%' }}>
             <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

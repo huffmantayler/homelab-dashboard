@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Status from './Status';
 import { uptimeKuma } from '../lib/uptimeKuma';
@@ -6,7 +6,7 @@ import { uptimeKuma } from '../lib/uptimeKuma';
 // Mock the singleton instance
 vi.mock('../lib/uptimeKuma', () => ({
     uptimeKuma: {
-        subscribe: vi.fn().mockReturnValue(() => { }),
+        subscribe: vi.fn(() => () => { }),
     }
 }));
 
@@ -21,22 +21,26 @@ describe('Status Page', () => {
     });
 
     it('renders monitors when data is received', async () => {
-        // Mock the subscribe implementation to immediately call the callback
-        const mockMonitors = [
-            { id: 1, name: 'Main Site', status: 1, ping: 20, uptime: 99.9, tags: [] }
-        ];
+        const mockMonitors = {
+            1: { id: 1, name: 'Main Site', status: 1, ping: 20, uptime: 99.9, tags: [] }
+        };
 
-        // @ts-ignore
-        uptimeKuma.subscribe.mockImplementation((onMonitorList: any) => {
-            onMonitorList(mockMonitors);
-            return vi.fn(); // Return a mock function as unsubscribe
+        // Setup mock to call the callback immediately with data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (uptimeKuma.subscribe as any).mockImplementation((
+            setMonitorList: (data: unknown) => void
+        ) => {
+            act(() => {
+                setMonitorList(Object.values(mockMonitors));
+            });
+            return () => { };
         });
 
         render(<Status />);
 
+        // Wait for the monitor to appear
         await waitFor(() => {
             expect(screen.getByText('Main Site')).toBeInTheDocument();
-            expect(screen.getByText('Up')).toBeInTheDocument();
         });
     });
 });

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress, Alert, Card, CardContent, Chip, Tooltip, Grid } from '@mui/material';
 import { uptimeKuma, type Monitor, type Heartbeat, type Uptime } from '../lib/uptimeKuma';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import PendingIcon from '@mui/icons-material/Pending';
-import ConstructionIcon from '@mui/icons-material/Construction';
+import {
+    CheckCircle as CheckCircleIcon,
+    Error as ErrorIcon,
+    Pending as PendingIcon,
+    Construction as ConstructionIcon
+} from '@mui/icons-material';
 
 const Status: React.FC = () => {
     const [monitors, setMonitors] = useState<Monitor[]>([]);

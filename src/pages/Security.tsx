@@ -9,7 +9,15 @@ import {
 import HistoryChart from '../components/HistoryChart';
 import { getPiholeStats, getPiholeHistory, type PiholeStats } from '../lib/pihole';
 
-const StatCard = ({ title, value, icon, color, subtext }: any) => (
+interface StatCardProps {
+    title: string;
+    value: string;
+    icon: React.ReactNode;
+    color: string;
+    subtext?: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, subtext }) => (
     <Card sx={{ height: '100%' }}>
         <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -36,7 +44,7 @@ const StatCard = ({ title, value, icon, color, subtext }: any) => (
 
 const Security: React.FC = () => {
     const [stats, setStats] = useState<PiholeStats | null>(null);
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +64,7 @@ const Security: React.FC = () => {
 
             if (historyData && historyData.history) {
                 // Map the history array from the API response
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setHistory(historyData.history.map((item: any) => ({
                     time: item.timestamp,
                     queries: item.total,

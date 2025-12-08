@@ -1,12 +1,7 @@
 import React from 'react';
 
-const MockIcon = (props: any) => <span data-testid="mui-icon" {...props} />;
+const MockIcon = (props: React.ComponentProps<'svg'>) => <svg data-testid="mock-icon" {...props} />;
 
-export default MockIcon;
-
-export const Menu = MockIcon;
-export const Search = MockIcon;
-export const Notifications = MockIcon;
 export const Storage = MockIcon;
 export const Memory = MockIcon;
 export const Speed = MockIcon;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { getSystems, getContainers, type SystemStats, type ContainerStats } from '../lib/beszel';
 
 export interface Alert {
@@ -24,7 +24,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         try {
             const [systemsData, containersData] = await Promise.all([
                 getSystems(),
@@ -38,7 +38,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const generateAlerts = (currentSystems: SystemStats[], currentContainers: ContainerStats[]) => {
         const newAlerts: Alert[] = [];
@@ -132,7 +132,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refreshData();
         const interval = setInterval(refreshData, 5000); // Poll every 5 seconds
         return () => clearInterval(interval);
-    }, []);
+    }, [refreshData]);
 
     return (
         <DataContext.Provider value={{ systems, containers, alerts, loading, refreshData }}>
@@ -141,6 +141,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useData = () => {
     const context = useContext(DataContext);
     if (context === undefined) {
