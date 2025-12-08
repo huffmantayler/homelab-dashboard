@@ -239,10 +239,18 @@ class UptimeKumaClient {
             this.listeners.forEach(l => l.onUptime?.(uptime));
         });
 
-        this.socket.on('disconnect', () => {
-            console.log('Disconnected from Uptime Kuma');
+        this.socket.on('disconnect', (reason) => {
+            console.log('Disconnected from Uptime Kuma:', reason);
             this.connected = false;
             this.listeners.forEach(l => l.onDisconnect?.());
+        });
+
+        this.socket.on('connect_error', (err) => {
+            console.error('Uptime Kuma Connection Error:', err.message);
+            // @ts-ignore
+            if (err.data) { console.error('Error Data:', err.data); }
+            // @ts-ignore
+            if (err.req) { console.error('Request:', err.req); } // Might be too verbose or undefined
         });
 
         this.socket.on('error', (err) => {
