@@ -20,7 +20,8 @@ server {
         set $backend_upstream http://backend:3000;
         
         # Proxy to the backend service (using variable forces lazy resolution)
-        proxy_pass $backend_upstream/api/pihole;
+        # When using variables in proxy_pass, omitting the URI part preserves the original request URI
+        proxy_pass $backend_upstream;
         
         # Standard proxy headers
         proxy_set_header Host $host;
