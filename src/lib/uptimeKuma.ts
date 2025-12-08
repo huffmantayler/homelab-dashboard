@@ -150,10 +150,10 @@ class UptimeKumaClient {
         });
 
         // Debug: Log all incoming events
-        this.socket.onAny((event, ...args) => {
+        this.socket.onAny((event) => {
             // Debugging missing heartbeatList
             if (event === 'heartbeatList') {
-                // console.log(`Socket Debug: Incoming event '${event}'`, args);
+                // console.log(`Socket Debug: Incoming event '${event}'`);
             }
         });
 
