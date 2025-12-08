@@ -14,7 +14,14 @@ const PIHOLE_URL = process.env.VITE_PIHOLE_URL || 'http://pi.hole';
 const PIHOLE_PASSWORD = process.env.VITE_PIHOLE_PASSWORD;
 
 // Middleware to parse JSON
+// Middleware to parse JSON
 app.use(express.json());
+
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 // Session store (in-memory)
 let sessionSid = null;
