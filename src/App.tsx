@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 import { AuthProvider } from 'react-oidc-context';
-import theme from './theme';
+import { ThemeProvider } from './contexts/ThemeContext';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
+import Status from './pages/Status';
 import Containers from './pages/Containers';
 import Security from './pages/Security';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import { DataProvider } from './contexts/DataContext';
@@ -48,7 +50,7 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <CssBaseline />
       <AuthProvider {...oidcConfig}>
         <DataProvider>
@@ -60,8 +62,10 @@ function App() {
                   <DashboardLayout>
                     <Routes>
                       <Route path="/" element={<DashboardHome />} />
+                      <Route path="/status" element={<Status />} />
                       <Route path="/containers" element={<Containers />} />
                       <Route path="/security" element={<Security />} />
+                      <Route path="/settings" element={<Settings />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </DashboardLayout>

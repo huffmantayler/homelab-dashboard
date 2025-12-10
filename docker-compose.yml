@@ -1,0 +1,46 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment: # None needed for frontend now
+    networks:
+      - home-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: ${IMAGE_REPO:-ghcr.io/huffmantayler/homelab-dashboard}-backend:latest
+    container_name: home-dashboard-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    environment:
+      - PIHOLE_URL=${VITE_PIHOLE_URL}
+      - PIHOLE_PASSWORD=${VITE_PIHOLE_PASSWORD}
+      - BESZEL_URL=${VITE_BESZEL_URL}
+      - BESZEL_EMAIL=${VITE_BESZEL_EMAIL}
+      - BESZEL_PASSWORD=${VITE_BESZEL_PASSWORD}
+      - HA_URL=${VITE_HA_URL}
+      - HA_TOKEN=${VITE_HA_TOKEN}
+      - UPTIME_KUMA_URL=${VITE_UPTIME_KUMA_URL}
+      - UPTIME_KUMA_USERNAME=${VITE_UPTIME_KUMA_USERNAME}
+      - UPTIME_KUMA_PASSWORD=${VITE_UPTIME_KUMA_PASSWORD}
+    networks:
+      - home-net
+
+networks:
+  home-net:
+    driver: bridge

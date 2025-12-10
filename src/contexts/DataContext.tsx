@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { getSystems, getContainers, type SystemStats, type ContainerStats } from '../lib/beszel';
 
 export interface Alert {
@@ -24,21 +24,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         try {
             const [systemsData, containersData] = await Promise.all([
                 getSystems(),
                 getContainers()
             ]);
             setSystems(systemsData);
-            setContainers(containersData);
-            generateAlerts(systemsData, containersData);
+
+            // Filter out stale containers (not updated in last 5 minutes)
+            // This prevents "ghost" containers from previous deployments from showing up
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime();
+            const activeContainers = containersData.filter(c => {
+                const updatedTime = new Date(c.updated).getTime();
+                return updatedTime > fiveMinutesAgo;
+            });
+
+            setContainers(activeContainers);
+            generateAlerts(systemsData, activeContainers);
         } catch (error) {
             console.error('Failed to refresh data:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const generateAlerts = (currentSystems: SystemStats[], currentContainers: ContainerStats[]) => {
         const newAlerts: Alert[] = [];
@@ -118,12 +127,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
 
-        console.log('Generated Alerts:', newAlerts);
-        if (newAlerts.length > 0) {
-            console.log('First Alert Details:', newAlerts[0]);
-            const firstCont = currentContainers.find(c => newAlerts[0].id.includes(c.id));
-            if (firstCont) console.log('Container causing alert:', firstCont);
-        }
+        // console.log('Generated Alerts:', newAlerts);
+        // if (newAlerts.length > 0) {
+        //     console.log('First Alert Details:', newAlerts[0]);
+        //     const firstCont = currentContainers.find(c => newAlerts[0].id.includes(c.id));
+        //     if (firstCont) console.log('Container causing alert:', firstCont);
+        // }
 
         setAlerts(newAlerts);
     };
@@ -132,7 +141,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refreshData();
         const interval = setInterval(refreshData, 5000); // Poll every 5 seconds
         return () => clearInterval(interval);
-    }, []);
+    }, [refreshData]);
 
     return (
         <DataContext.Provider value={{ systems, containers, alerts, loading, refreshData }}>
@@ -141,6 +150,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useData = () => {
     const context = useContext(DataContext);
     if (context === undefined) {

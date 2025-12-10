@@ -24,20 +24,8 @@ export interface PiholeStats {
 
 export const getPiholeStats = async (): Promise<PiholeStats | null> => {
     try {
-        let apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
-        const headers: HeadersInit = {};
-
-        if (apiKey) {
-            // Sanitize: trim whitespace and remove surrounding quotes
-            apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
-            headers['sid'] = apiKey;
-        }
-
-        // Use the proxy path configured in vite.config.ts (and nginx.conf for prod)
-        // Pi-hole v6 uses /api/stats/summary
-        const response = await fetch('/api/pihole/stats/summary', {
-            headers
-        });
+        // The backend server.js proxies /api/pihole/* requests and handles authentication
+        const response = await fetch('/api/pihole/stats/summary');
 
         if (!response.ok) {
             throw new Error(`Pi-hole API error: ${response.status} ${response.statusText}`);
@@ -51,28 +39,16 @@ export const getPiholeStats = async (): Promise<PiholeStats | null> => {
     }
 };
 
-export const getPiholeHistory = async (): Promise<any | null> => {
+export const getPiholeHistory = async (): Promise<Record<string, unknown> | null> => {
     try {
-        let apiKey = import.meta.env.VITE_PIHOLE_API_KEY;
-        const headers: HeadersInit = {};
-
-        if (apiKey) {
-            // Sanitize: trim whitespace and remove surrounding quotes
-            apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
-            headers['sid'] = apiKey;
-        }
-
-        // Pi-hole v6 uses /api/history
-        const response = await fetch('/api/pihole/history', {
-            headers
-        });
+        // The backend server.js proxies /api/pihole/* requests and handles authentication
+        const response = await fetch('/api/pihole/history');
 
         if (!response.ok) {
             throw new Error(`Pi-hole API error: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Pi-hole History Data:', data); // Debug logging
         return data;
     } catch (error) {
         console.error('Failed to fetch Pi-hole history:', error);

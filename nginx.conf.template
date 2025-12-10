@@ -14,40 +14,30 @@ server {
     }
 
     # Proxy for Pi-hole API
-    location /api/pihole {
-        # Rewrite the path to match Pi-hole v6 API structure
-        rewrite ^/api/pihole(.*)$ /api$1 break;
+    # Generic API Proxy to Backend
+    location /api/ {
+        resolver 127.0.0.11 valid=30s;
+        set $backend_upstream http://home-dashboard-backend:3000;
         
-        # Proxy to the Pi-hole server defined in env var
-        proxy_pass ${VITE_PIHOLE_URL};
+        proxy_pass $backend_upstream;
         
-        # Standard proxy headers
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
-    # Proxy for Home Assistant API
-    location /api/hass/ {
-        # Proxy to the Home Assistant server defined in env var
-        # Trailing slash is important here for automatic path mapping
-        proxy_pass ${VITE_HA_URL}/api/;
+    # Proxy for Socket.IO (Uptime Kuma)
+    location /socket.io/ {
+        proxy_pass http://home-dashboard-backend:3000;
         
         proxy_http_version 1.1;
-        
-        # Pass the client's Host header
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-        
-        # Strip headers that might confuse HA or cause 400 errors
-        proxy_set_header Cookie "";
-        proxy_set_header Origin "";
-        proxy_set_header Referer "";
-        proxy_set_header Upgrade "";
-        proxy_set_header Connection "";
-        
-        # Strip Forwarded headers to avoid Trusted Proxy issues
-        proxy_set_header X-Forwarded-For "";
-        proxy_set_header X-Real-IP "";
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
     # Cache static assets

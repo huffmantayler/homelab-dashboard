@@ -1,11 +1,6 @@
-import PocketBase from 'pocketbase';
 
-// Initialize the PocketBase client
-// You can override this with an environment variable VITE_BESZEL_URL
-const pb = new PocketBase(import.meta.env.VITE_BESZEL_URL || 'http://localhost:8090');
-
-// Disable auto-cancellation to allow multiple requests
-pb.autoCancellation(false);
+// Removed PocketBase SDK to avoid client-side credentials
+// Using fetch to proxy requests through backend
 
 export interface SystemStats {
     id: string;
@@ -18,33 +13,47 @@ export interface SystemStats {
     updated: string;
 }
 
+// Internal interface for raw API response
+interface SystemRecord {
+    id: string;
+    name: string;
+    status: string;
+    info?: {
+        cpu?: number;
+        mp?: number;
+        dp?: number;
+        dt?: number;
+    };
+    updated: string;
+    [key: string]: unknown;
+}
+
 export const getSystems = async (): Promise<SystemStats[]> => {
     try {
-        // Authenticate if credentials are provided
-        const email = import.meta.env.VITE_BESZEL_EMAIL;
-        const password = import.meta.env.VITE_BESZEL_PASSWORD;
+        // Fetch from backend proxy
+        // Using perPage=500 to ensure we get all records
+        const response = await fetch('/api/beszel/api/collections/systems/records?sort=name&perPage=500');
 
-        if (email && password && !pb.authStore.isValid) {
-            await pb.collection('users').authWithPassword(email, password);
+        if (!response.ok) {
+            console.error('Beszel fetch failed:', response.statusText);
+            return [];
         }
 
-        // 'systems' is the default collection for Beszel agents
-        const records = await pb.collection('systems').getFullList({
-            sort: 'name',
-        });
+        const data = await response.json();
+        // PocketBase returns { items: [], ... } for getList/getFullList logic if using SDK, 
+        // but raw API returns { items: [...], totalItems: ... }
+        const records = (data.items || []) as SystemRecord[];
 
-        // Map PocketBase records to our SystemStats interface
-        return records.map((record: any) => {
+        return records.map((rec) => {
             return {
-                id: record.id,
-                name: record.name,
-                status: record.status || 'up',
-                // Metrics are nested in the 'info' object
-                cpu: record.info?.cpu || 0,
-                memory: record.info?.mp || 0,
-                disk: record.info?.dp || 0,
-                temperature: record.info?.dt || 0, // Assuming dt is temperature in Celsius
-                updated: record.updated,
+                id: rec.id,
+                name: rec.name,
+                status: (rec.status === 'up' || rec.status === 'down') ? rec.status : 'up',
+                cpu: rec.info?.cpu || 0,
+                memory: rec.info?.mp || 0,
+                disk: rec.info?.dp || 0,
+                temperature: rec.info?.dt || 0,
+                updated: rec.updated,
             };
         });
     } catch (error) {
@@ -65,40 +74,46 @@ export interface ContainerStats {
     updated: string;
 }
 
+interface ContainerRecord {
+    id: string;
+    name: string;
+    image: string;
+    status: string;
+    system: string;
+    cpu: number;
+    memory: number;
+    created: string;
+    updated: string;
+    [key: string]: unknown;
+}
+
 export const getContainers = async (): Promise<ContainerStats[]> => {
     try {
-        // Authenticate if credentials are provided
-        const email = import.meta.env.VITE_BESZEL_EMAIL;
-        const password = import.meta.env.VITE_BESZEL_PASSWORD;
+        const response = await fetch('/api/beszel/api/collections/containers/records?sort=name&perPage=500');
 
-        if (email && password && !pb.authStore.isValid) {
-            await pb.collection('users').authWithPassword(email, password);
+        if (!response.ok) {
+            console.error('Beszel containers fetch failed:', response.statusText);
+            return [];
         }
 
-        const records = await pb.collection('containers').getFullList({
-            sort: 'name',
+        const data = await response.json();
+        const records = (data.items || []) as ContainerRecord[];
+
+        return records.map((rec) => {
+            return {
+                id: rec.id,
+                name: rec.name,
+                image: rec.image || 'Unknown Image',
+                status: rec.status || 'unknown',
+                systemId: rec.system || '',
+                cpu: rec.cpu || 0,
+                memory: rec.memory || 0,
+                created: rec.created,
+                updated: rec.updated,
+            };
         });
-
-        // Remove debug log
-        // if (records.length > 0) {
-        //     console.log('Container Record:', records[0]);
-        // }
-
-        return records.map((record: any) => ({
-            id: record.id,
-            name: record.name,
-            image: record.image || 'Unknown Image',
-            status: record.status || 'unknown',
-            systemId: record.system || '', // Assuming 'system' is the relation field
-            cpu: record.cpu || 0, // Assuming direct field or nested in stats?
-            memory: record.memory || 0,
-            created: record.created,
-            updated: record.updated,
-        }));
     } catch (error) {
         console.error('Failed to fetch containers:', error);
         return [];
     }
 };
-
-export default pb;

@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material';
 
 interface HistoryChartProps {
-    data: any[];
+    data: Record<string, unknown>[];
     title: string;
     dataKey: string;
     color?: string;

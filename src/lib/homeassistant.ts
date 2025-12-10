@@ -5,7 +5,7 @@ export interface HassEntity {
         friendly_name?: string;
         icon?: string;
         brightness?: number;
-        [key: string]: any;
+        [key: string]: unknown;
     };
     last_changed: string;
     last_updated: string;
@@ -13,47 +13,32 @@ export interface HassEntity {
 
 export const getHassStates = async (): Promise<HassEntity[]> => {
     try {
-        let token = import.meta.env.VITE_HA_TOKEN?.trim();
-        if (!token) {
-            console.error('VITE_HA_TOKEN is missing');
-            return [];
-        }
-        // Remove quotes if present (common mistake in secrets)
-        token = token.replace(/^["']|["']$/g, '');
-        // Remove Bearer prefix if present
-        token = token.replace(/^Bearer\s+/i, '');
-
+        // Token is handled by the backend proxy
         const response = await fetch('/api/hass/states', {
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
         });
 
         if (!response.ok) {
-            const text = await response.text();
-            console.error('HA API Error Body:', text);
-            throw new Error(`Home Assistant API error: ${response.status} ${response.statusText} - ${text}`);
+            throw new Error(`Failed to fetch HA states: ${response.statusText}`);
         }
 
         const data = await response.json();
-        return data;
+        return Array.isArray(data) ? data : [];
     } catch (error) {
-        console.error('Failed to fetch Home Assistant states:', error);
+        console.error('Error fetching HA states:', error);
         return [];
     }
 };
 
 export const toggleLight = async (entityId: string, turnOn: boolean): Promise<boolean> => {
     try {
-        let token = import.meta.env.VITE_HA_TOKEN?.trim();
-        if (!token) return false;
-        token = token.replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '');
-
         const service = turnOn ? 'turn_on' : 'turn_off';
+        // Token is handled by the backend proxy
         const response = await fetch(`/api/hass/services/homeassistant/${service}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
