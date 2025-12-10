@@ -26,31 +26,18 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true, // Listen on all addresses
       proxy: {
-        '/api/pihole': {
-          target: env.VITE_PIHOLE_URL || 'http://pi.hole',
+        // Proxy all API requests to the backend server
+        '/api': {
+          target: 'http://localhost:3000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/pihole/, '/api'),
-          configure: (proxy) => {
-            proxy.on('error', (err) => {
-              console.log('proxy error', err);
-            });
-          },
+          secure: false,
         },
-        '/api/hass': {
-          target: env.VITE_HA_URL || 'http://homeassistant.local:8123',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/hass/, '/api'),
-        },
+        // Proxy Socket.IO to the backend server
         '/socket.io': {
-          target: env.VITE_UPTIME_KUMA_URL || 'http://localhost:3001',
+          target: 'http://localhost:3000',
           ws: true,
           changeOrigin: true,
-        },
-        '/uptime-kuma/socket.io': {
-          target: env.VITE_UPTIME_KUMA_URL || 'http://localhost:3001',
-          ws: true,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/uptime-kuma\/socket.io/, '/socket.io'),
+          secure: false,
         }
       },
     },

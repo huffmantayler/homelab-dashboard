@@ -127,12 +127,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
 
-        console.log('Generated Alerts:', newAlerts);
-        if (newAlerts.length > 0) {
-            console.log('First Alert Details:', newAlerts[0]);
-            const firstCont = currentContainers.find(c => newAlerts[0].id.includes(c.id));
-            if (firstCont) console.log('Container causing alert:', firstCont);
-        }
+        // console.log('Generated Alerts:', newAlerts);
+        // if (newAlerts.length > 0) {
+        //     console.log('First Alert Details:', newAlerts[0]);
+        //     const firstCont = currentContainers.find(c => newAlerts[0].id.includes(c.id));
+        //     if (firstCont) console.log('Container causing alert:', firstCont);
+        // }
 
         setAlerts(newAlerts);
     };
