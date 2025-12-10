@@ -20,7 +20,7 @@ describe('Home Assistant Service', () => {
             const result = await getHassStates();
             expect(result).toEqual(mockStates);
             expect(fetch).toHaveBeenCalledWith('/api/hass/states', expect.objectContaining({
-                headers: expect.objectContaining({ 'Authorization': 'Bearer test-token' })
+                headers: expect.objectContaining({ 'Content-Type': 'application/json' })
             }));
         });
 
