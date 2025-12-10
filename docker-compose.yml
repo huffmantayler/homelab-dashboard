@@ -8,10 +8,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
-      - VITE_HA_URL=${VITE_HA_URL}
-      - VITE_UPTIME_KUMA_URL=${VITE_UPTIME_KUMA_URL}
+    environment: # None needed for frontend now
     networks:
       - home-net
 
@@ -25,14 +22,22 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 5s
     environment:
-      - VITE_PIHOLE_URL=${VITE_PIHOLE_URL}
-      - VITE_PIHOLE_PASSWORD=${VITE_PIHOLE_PASSWORD}
+      - PIHOLE_URL=${VITE_PIHOLE_URL}
+      - PIHOLE_PASSWORD=${VITE_PIHOLE_PASSWORD}
+      - BESZEL_URL=${VITE_BESZEL_URL}
+      - BESZEL_EMAIL=${VITE_BESZEL_EMAIL}
+      - BESZEL_PASSWORD=${VITE_BESZEL_PASSWORD}
+      - HA_URL=${VITE_HA_URL}
+      - HA_TOKEN=${VITE_HA_TOKEN}
+      - UPTIME_KUMA_URL=${VITE_UPTIME_KUMA_URL}
+      - UPTIME_KUMA_USERNAME=${VITE_UPTIME_KUMA_USERNAME}
+      - UPTIME_KUMA_PASSWORD=${VITE_UPTIME_KUMA_PASSWORD}
     networks:
       - home-net
 

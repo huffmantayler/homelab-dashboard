@@ -1,3 +1,4 @@
+
 import { io, Socket } from 'socket.io-client';
 
 export interface Monitor {
@@ -38,11 +39,6 @@ export interface Uptime {
 }
 
 // Define specific types for socket events to avoid 'any'
-interface LoginResponse {
-    ok: boolean;
-    msg?: string;
-}
-
 interface SocketError {
     message: string;
     data?: unknown;
@@ -60,7 +56,7 @@ interface RawHeartbeat {
 
 class UptimeKumaClient {
     private socket: Socket | null = null;
-    private url: string;
+    // private url: string; // Removed
 
     // Cache
     private monitors: Monitor[] = [];
@@ -78,7 +74,7 @@ class UptimeKumaClient {
     }[] = [];
 
     constructor() {
-        this.url = import.meta.env.VITE_UPTIME_KUMA_URL;
+        // No URL needed, connects to same origin (our backend)
     }
 
     public subscribe(
@@ -115,17 +111,13 @@ class UptimeKumaClient {
     }
 
     private connectSocket() {
-        if (!this.url) {
-            console.error('VITE_UPTIME_KUMA_URL is not set');
-            return;
-        }
-
         if (this.socket) {
             return; // Already connected or connecting
         }
 
+        // Connect to our backend proxy
         this.socket = io('/', {
-            path: '/uptime-kuma/socket.io',
+            path: '/socket.io',
             transports: ['polling', 'websocket'],
             reconnection: true,
             reconnectionAttempts: 10,
@@ -133,68 +125,26 @@ class UptimeKumaClient {
         });
 
         this.socket.on('connect', () => {
-            console.log('Connected to Uptime Kuma');
+            console.log('Connected to Backend Kuma Proxy');
             this.connected = true;
             this.listeners.forEach(l => l.onConnect?.());
-
-            // Authentication Logic
-            const token = import.meta.env.VITE_UPTIME_KUMA_TOKEN;
-            const username = import.meta.env.VITE_UPTIME_KUMA_USERNAME;
-            const password = import.meta.env.VITE_UPTIME_KUMA_PASSWORD;
-
-            if (token) {
-                console.log('Authenticating with Session Token...');
-                this.socket?.emit('loginByToken', {
-                    token,
-                }, (res: LoginResponse) => {
-                    if (res.ok) {
-                        console.log('Logged in to Uptime Kuma with Token successfully');
-                    } else {
-                        console.error('Uptime Kuma Token Login failed:', res.msg);
-                    }
-                });
-            } else if (username && password) {
-                console.log('Authenticating with Username/Password...');
-                this.socket?.emit('login', {
-                    username,
-                    password,
-                }, (res: LoginResponse) => {
-                    if (res.ok) {
-                        console.log('Logged in to Uptime Kuma successfully');
-                    } else {
-                        console.error('Uptime Kuma Login failed:', res.msg);
-                    }
-                });
-            } else {
-                console.warn('No credentials found. Set VITE_UPTIME_KUMA_USERNAME/PASSWORD or VITE_UPTIME_KUMA_TOKEN in .env');
-            }
         });
 
-        // Debug: Log all incoming events
+        // Debug: Log all incoming events (commented out for production)
+        /*
         this.socket.onAny((event) => {
-            // Debugging missing heartbeatList
-            if (event === 'heartbeatList') {
-                // console.log(`Socket Debug: Incoming event '${event}'`);
-            }
+             console.log(`Socket Debug: Incoming event '${event}'`);
         });
-
-        this.socket.on('login required', () => {
-            console.log('Uptime Kuma reported: Login Required');
-        });
+        */
 
         this.socket.on('monitorList', (data: { [key: string]: Monitor }) => {
-            // API returns an object map, convert to array
-            const monitors = Object.values(data);
+            // console.log('Received monitorList:', data);
 
-            // Debug: Inspect the first monitor to see if 'status' is present
-            if (monitors.length > 0) {
-                console.log('Socket Debug: Sample Monitor Structure:', monitors[0]);
-            }
+            // Expected data is object: { "1": { ... }, "2": { ... } }
+            // Convert to array
+            this.monitors = Object.values(data);
 
-            // Update cache
-            this.monitors = monitors;
-
-            // Notify all listeners
+            // Notify listeners
             this.listeners.forEach(l => l.onMonitorList?.(this.monitors));
         });
 

@@ -13,14 +13,9 @@ export interface HassEntity {
 
 export const getHassStates = async (): Promise<HassEntity[]> => {
     try {
-        let token = import.meta.env.VITE_HA_TOKEN?.trim();
-        if (!token) return [];
-
-        token = token.replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '');
-
+        // Token is handled by the backend proxy
         const response = await fetch('/api/hass/states', {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -39,15 +34,11 @@ export const getHassStates = async (): Promise<HassEntity[]> => {
 
 export const toggleLight = async (entityId: string, turnOn: boolean): Promise<boolean> => {
     try {
-        let token = import.meta.env.VITE_HA_TOKEN?.trim();
-        if (!token) return false;
-        token = token.replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '');
-
         const service = turnOn ? 'turn_on' : 'turn_off';
+        // Token is handled by the backend proxy
         const response = await fetch(`/api/hass/services/homeassistant/${service}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
